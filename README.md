@@ -1,5 +1,5 @@
 
-**OSW** is a light C library for OS window managing, it's main purpouse is for creating software rasterizers.
+**OSW** is a small C library for OS creating windows. it's main purpouse is for creating software rasterizers.
 
 ## Building for Windows (MSVC)
 
@@ -29,7 +29,7 @@ $> ./mygame
 
 ## Installing OSW for your project
 
-Simply copy the static library to your project's ```lib``` folder, you must also copy the ```include/libosw``` to your project's ```include``` folder.
+Copy the static library to your project's ```lib``` folder, also copy the ```include/libosw``` to your project's ```include``` folder.
 
 
 ### Example
@@ -44,8 +44,6 @@ The following is a very basic example for creating a window:
 
 u32 framebuffer[WIN_WIDTH * WIN_HEIGHT] = {0};
 
-OSWMouse mouse;
-
 int main() {
 	//Create window and check for errors
 	u32 err = OSW_Init("My window", WIN_WIDTH * 2, WIN_HEIGHT * 2, 0);
@@ -55,10 +53,11 @@ int main() {
 
 	//Enable mouse/keyboard polling
 	OSW_MouseSetPolling(OSW_ENABLE);
-	OSW_KeyboardSetPolling(OSW_ENABLE); // Disables keyboard as joypad
+	OSW_KeyboardSetPolling(OSW_ENABLE); // Also disables keyboard as joypad
 
 	/* Init application */
-	u32 ci = 1;
+
+	OSWMouse mouse;
 	OSWKeyEvent kev;
 	while (1) { // loop forever
 		OSW_Poll();	// Poll mouse/keyboard/joypads
@@ -73,7 +72,7 @@ int main() {
 			/* do something when left button is pressed */
 		}
 
-		/* Do something else */
+		/* Modify the framebuffer pixels */
 
 		// Draw the frame and show it on screen
 		OSW_VideoDrawBuffer(framebuffer, WIN_WIDTH, WIN_HEIGHT);
@@ -86,8 +85,8 @@ int main() {
 
 ## Joypads and Keyboard mappings
 
-There is support for upto four joypad controllers that are found automatically. The keyboard defaults to the first joypad channel that has no controller connected. All applications use the same 11 keys from the keyboard that map onto a joypad (the mapping is disabled by using keyboard polling):
+There is support for upto four joypad controllers that are found automatically. The keyboard defaults to the first joypad channel that has no controller connected. All applications use the same 11 keys from the keyboard that map onto a joypad (the mapping is disabled when OSW_KeyboardSetPolling(OSW_ENABLE) is called):
 
 - The four arrow keys and Z, X, A, S, Q, W, D, E, Enter, and RightShift
-#- Press Esc to exit form full screen
+<!-- Press Esc to exit form full screen -->
 
