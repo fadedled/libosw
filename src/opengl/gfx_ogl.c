@@ -38,7 +38,7 @@ static u32 __osw_CreateSimpleGLProgram(const char *sh_src)
 
 	/* Compile Vertex Shader */
 	u32 vsh_obj = glCreateShader(GL_VERTEX_SHADER);
-	const char *vsh_source[2] = {"#version 430 core\n#define VERTEX_SHADER\n", sh_src};
+	const char *vsh_source[2] = {"#version 410 core\n#define VERTEX_SHADER\n", sh_src};
 	glShaderSource(vsh_obj, 2, vsh_source, NULL);
 	glCompileShader(vsh_obj);
 
@@ -53,7 +53,7 @@ static u32 __osw_CreateSimpleGLProgram(const char *sh_src)
 
 	/* Compile Fragment Shader */
 	u32 fsh_obj = glCreateShader(GL_FRAGMENT_SHADER);
-	const char *fsh_source[2] = {"#version 430 core\n#define FRAGMENT_SHADER\n", sh_src};
+	const char *fsh_source[2] = {"#version 410 core\n#define FRAGMENT_SHADER\n", sh_src};
 	glShaderSource(fsh_obj, 2, fsh_source, NULL);
 	glCompileShader(fsh_obj);
 
@@ -119,6 +119,9 @@ void ogl_Init(void)
 	printf("Compiling Main Program\n");
 #endif
 	prog_final = __osw_CreateSimpleGLProgram((const char*)main_glsl);
+	/* Set tex units */
+	glUseProgram(prog_final);
+	glUniform1i(glGetUniformLocation(prog_final, "tex_main"), GL_TEXTURE0);
 
 	/*Texture for main framebuffer*/
 	glActiveTexture(GL_TEXTURE0);
@@ -160,7 +163,6 @@ void ogl_Draw(const void *fb, u32 w, u32 h)
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, tex_mainfb);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, fb);
-
 
 	glViewport(vstate.frame_output_x, vstate.frame_output_y, vstate.frame_output_w, vstate.frame_output_h);
 

@@ -1,10 +1,10 @@
 /*
  * main.glsl - GLSL Shader for main display drawing
  * ======================================
- * Uses glsl version 430
+ * Uses glsl version 410
  */
 
-layout(std140, binding = 0) uniform video_data
+layout(std140) uniform video_data
 {
 	vec2  frame;
 	vec2  outdims;
@@ -39,7 +39,7 @@ layout(location = 1) in vec2 scale;
 layout(location = 2) in vec2 range;
 
 layout(location = 0) out vec4 frag_color;
-layout(binding = 0) uniform sampler2D tex_main;
+uniform sampler2D tex_main;
 
 vec2 sharp_uv()
 {

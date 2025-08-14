@@ -199,7 +199,7 @@ u32  __osw_VideoInit(u32 flags)
 	if (strstr(wglExts, "WGL_ARB_create_context") && wglCreateContextAttribsARB) {
 		int context_attribs[7] = {
 			WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-			WGL_CONTEXT_MINOR_VERSION_ARB, 3,
+			WGL_CONTEXT_MINOR_VERSION_ARB, 1,
 			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
 			0};
 		/* Create OpenGL context and make current */
