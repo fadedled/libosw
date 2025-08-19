@@ -15,6 +15,11 @@ void OSW_VideoSetFilter(ViFilter filter)
 	}
 }
 
+void OSW_VideoGetSize(u32 *w, u32 *h)
+{
+	*w = vstate.frame_w;
+	*h = vstate.frame_h;
+}
 
 void OSW_VideoSetSize(u32 w, u32 h)
 {

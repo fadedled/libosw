@@ -1,6 +1,8 @@
 
 #include <libosw/osw.h>
 #include "../../video_common.h"
+#include "../../input_common.h"
+#include "libosw/input.h"
 
 #include <objc/objc.h>
 #include <objc/runtime.h>
@@ -33,10 +35,42 @@ extern id const NSDefaultRunLoopMode;
 	#define abi_objc_msgSend_fpret objc_msgSend_fpret
 #endif
 
+#ifndef MAC_OS_X_VERSION_10_12
+#define MAC_OS_X_VERSION_10_12 101200
+#endif
+
+/* macOS 10.12 deprecated many constants, #define the new names for older SDKs */
+#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12
+	#define NSEventMaskAny                  NSAnyEventMask
+	#define NSEventModifierFlagCommand      NSCommandKeyMask
+	#define NSEventModifierFlagControl      NSControlKeyMask
+	#define NSEventModifierFlagOption       NSAlternateKeyMask
+	#define NSEventTypeFlagsChanged         NSFlagsChanged
+	#define NSEventTypeKeyUp                NSKeyUp
+	#define NSEventTypeKeyDown              NSKeyDown
+	#define NSEventTypeMouseMoved           NSMouseMoved
+	#define NSEventTypeLeftMouseDown        NSLeftMouseDown
+	#define NSEventTypeRightMouseDown       NSRightMouseDown
+	#define NSEventTypeOtherMouseDown       NSOtherMouseDown
+	#define NSEventTypeLeftMouseDragged     NSLeftMouseDragged
+	#define NSEventTypeRightMouseDragged    NSRightMouseDragged
+	#define NSEventTypeOtherMouseDragged    NSOtherMouseDragged
+	#define NSEventTypeLeftMouseUp          NSLeftMouseUp
+	#define NSEventTypeRightMouseUp         NSRightMouseUp
+	#define NSEventTypeOtherMouseUp         NSOtherMouseUp
+	#define NSEventTypeScrollWheel          NSScrollWheel
+	#define NSTextAlignmentCenter           NSCenterTextAlignment
+	#define NSWindowStyleMaskBorderless     NSBorderlessWindowMask
+	#define NSWindowStyleMaskClosable       NSClosableWindowMask
+	#define NSWindowStyleMaskMiniaturizable NSMiniaturizableWindowMask
+	#define NSWindowStyleMaskTitled         NSTitledWindowMask
+#endif
+
+
 /* Use this to make the casting a bit more bearable */
-#define MSG(ret, ...)       (((ret (*)(__VA_ARGS__)))objc_msgSend)
-#define MSGS(ret, ...)      (((ret (*)(__VA_ARGS__)))abi_objc_msgSend_stret)
-#define MSGF(ret, ...)      (((ret (*)(__VA_ARGS__)))abi_objc_msgSend_fpret)
+#define MSG(rtype, ...)      ((rtype (*)(__VA_ARGS__))objc_msgSend)
+#define MSGS(rtype, ...)     ((rtype (*)(__VA_ARGS__))abi_objc_msgSend_stret)
+#define MSGF(rtype, ...)     ((rtype (*)(__VA_ARGS__))abi_objc_msgSend_fpret)
 #define cls                 objc_getClass
 #define sel                 sel_registerName
 #define alloc_cls(name)     MSG(id, Class, SEL)(cls(name), sel_Alloc)
@@ -105,7 +139,7 @@ u32  __osw_VideoInit(u32 flags)
 {
 	SEL sel_Alloc = sel("alloc");
 	SEL sel_Init = sel("init");
-	SEK sel_Autorelease = sel("autorelease");
+	SEL sel_Autorelease = sel("autorelease");
 
 	/* Autorelease Pool */
 	id pool = MSG(id, id, SEL)(alloc_cls("NSAutoreleasePool"), sel_Init);
@@ -137,8 +171,25 @@ u32  __osw_VideoInit(u32 flags)
 	/* TODO: Check styleMask = 15 constants */
 	osw_osx.win = MSG(id, id, SEL, NSRect, NSUInteger, NSUInteger, BOOL)(alloc_cls("NSWindow"), sel("initWithContentRect:styleMask:backing:defer:"), wrect, 15, 2, NO);
 	MSG(void, id, SEL)(osw_osx.win, sel_Autorelease);
+	MSG(void, id, SEL, BOOL)(osw_osx.win, sel("setTeleasedWhenClosed:"), NO);
 
+	/* WindowDelegate for window resize and closing */
+	Class class_WindowDelegate = objc_allocateClassPair(cls("NSObject"), "WindowDelegate", 0);
+	Protocol *prot_NSWindowDelegate = objc_getProtocol("NSWindowDelegate");
+	class_addProtocol(class_WindowDelegate, prot_NSWindowDelegate);
+	class_addMethod(class_WindowDelegate, sel("windowWillClose:"), (IMP)__windowClose, "v@:@");
+	//??
+	//class_addMethod(class_WindowDelegate, sel("windowWillClose:"), (IMP)__windowClose, "v@:@");
 	//TODO: Other things like content view
+	id wdg = MSG(id, id, SEL)(MSG(id, Class, SEL)(class_WindowDelegate, sel_Alloc), sel_Init);
+	MSG(void, id, SEL)(wdg, sel_Autorelease);
+	MSG(void, id, SEL, id)(osw_osx.win, sel("setDelegate:"), wdg);
+
+	id content_view = MSG(id, id, SEL)(osw_osx.win, sel("contentView"));
+	MSG(void, id, SEL, BOOL)(content_view, sel("setWantsBestResolutionOpenGLSurface:"), YES);
+
+	NSPoint point = {20, 20};
+	MSG(void, id, SEL, NSPoint)(osw_osx.win, sel("cascadeTopLeftFromPoint:"), point);
 
 	/* Create OpengGL context */
 	u32 gl_attr[] = {
@@ -146,7 +197,7 @@ u32  __osw_VideoInit(u32 flags)
 		11, 8,  /* Alpha size */
 		5,          /* Use double buffer */
 		73,         /* Hardware accelerate */
-		72,         /* No recverry (TODO: what?) */
+		72,         /* No recovery (TODO: what?) */
 		/* v Is this for MSAA? v */
 		55, 1,  /* # of sample buffers */
 		56, 4, /* # of samples */
@@ -163,9 +214,14 @@ u32  __osw_VideoInit(u32 flags)
 	MSG(void, id, SEL, BOOL)(osw_osx.win, sel("setAcceptsMouseMovedEvents:", YES));
 
 	//TODO: Do some other things
+	id back_color = MSG(id, Class, SEL)(cls("NSColor"), sel("blackColor"));
+	MSG(void, id, SEL, id)(osw_osx.win, sel("setBackgroundColor:"), back_color);
 
 	//TODO: Only need to be done once?
 	MSG(void, id, SEL)(osw_osx.glc, sel("makeCurrentContext"));
+
+	/* Add joypad keybindings */
+
 
 	return OSW_OK;
 }
@@ -173,7 +229,7 @@ u32  __osw_VideoInit(u32 flags)
 
 void __osw_VideoExit(void)
 {
-
+	/* Should I do something? */
 }
 
 
@@ -182,13 +238,15 @@ void __osw_VideoAttrSet(u32 attr, void *val)
 	switch (attr) {
 		case OSW_VIDEO_ATTR_TITLE: {
 			/* TODO: does this allocate mem? */
-			id title_str = MSG(id, Class, SEL, const char*)( class_NSString, sel("stringWithUTF8String"), (char *)val);
+			id title_str = MSG(id, Class, SEL, const char*)(class_NSString, sel("stringWithUTF8String"), (char *)val);
 			MSG(void, id, SEL, id)(osw_osx.win, sel_setTitle, title_str);
 		} break;
 		case OSW_VIDEO_ATTR_FRAME: {
-#if 0
 			u32 w = vstate.frame_w;
 			u32 h = vstate.frame_h;
+			/* What does this do? */
+			MSG(void, id, SEL, CGSize)(osw_osx.win, sel("setContentSize:"), CGSizeMake((CGFloat)w, (CGFloat)h));
+#if 0
 			XResizeWindow(osw_x11.dpy, osw_x11.win, w, h);
 
 			//if (frame == OSW_VIDEO_FRAME_FULLSCREEN) {
@@ -204,26 +262,84 @@ void __osw_VideoAttrSet(u32 attr, void *val)
 
 void __osw_VideoPoll(void)
 {
+	NSInteger mod_flags = 0;
+	//TODO: Depracated types
+	NSUInteger event_mask = NSEventMaskKeyDown | NSEventMaskKeyUp | StructureNotifyMask;
+
+	/* Only check button events when mouse polling is active */
+	if (input_state.polling & OSW_MOUSE_POLLING) {
+		polling_mask |= NSEventMaskLeftMouseDown | NSEventMaskLeftMouseUp | NSEventMaskRightMouseDown | NSEventMaskRightMouseUp | NSEventMaskScrollWheel;
+	}
+
+	input_state.mouse.btn0 = 0;
+	input_state.mouse.btn1 = 0;
+	input_state.mouse.scroll = 0;
+
+						case Button1: input_state.mouse.btn0++; input_state.mouse.btn |= OSW_MOUSE_BTN0;
+					case Button3: input_state.mouse.btn1++; input_state.mouse.btn |= OSW_MOUSE_BTN1;
+					case Button4: input_state.mouse.scroll--;
+					case Button5: input_state.mouse.scroll++;
+
 	id dist_past = MSG(cls("NSDate"), sel_distantPast);
 	id event = MSG(id, id, SEL, NSUInteger, id, id, BOOL)(NSApp, sel_nextEventMatchingMask, NSUIntegerMax, dist_past, NSDefaultRunLoopMode, YES);
 	if (event) {
 		NSUInteger ev_type = MSG(event, sel_type);
 		switch (ev_type) {
-			case 5: {/* NSMouseMoved */
+			case NSEventTypeMouseMoved: {/* NSMouseMoved */
 			} break;
-			case 1: {/* NSLeftMouseDown */
+			case NSEventTypeLeftMouseDown: {/* NSLeftMouseDown */
+				input_state.mouse.btn0++; input_state.mouse.btn |= OSW_MOUSE_BTN0;
 			} break;
-			case 2: {/* NSLeftMouseUp */
+			case NSEventTypeLeftMouseUp: {/* NSLeftMouseUp */
+				input_state.mouse.btn &= ~OSW_MOUSE_BTN0;
 			} break;
-			case 3: {/* NSRightMouseDown */
+			case NSEventTypeRightMouseDown: {/* NSRightMouseDown */
+				input_state.mouse.btn1++; input_state.mouse.btn |= OSW_MOUSE_BTN1;
 			} break;
-			case 4: {/* NSRightMouseUp */
+			case NSEventTypeRightMouseUp: {/* NSRightMouseUp */
+				input_state.mouse.btn &= ~OSW_MOUSE_BTN1;
 			} break;
-			case 22: {/* NSScrollWheel */
+			case NSEventTypeScrollWheel: {/* NSScrollWheel */
 			} break;
-			case 10: {/* NSKeyDown */
+			case NSEventTypeFlagsChanged: {
+				mod_flags = MSG(NSInteger, id, SEL)(event, sel_modifierFlags);
+				/* TODO: change mod keys */
 			} break;
-			case 11: {/* NSKeyUp */
+			case NSEventTypeKeyDown: {/* NSKeyDown */
+				NSInteger key_code = MSG(NSInteger, id, SEL)(event, sel_keyCode);
+				if (input_state.polling & OSW_KEYBOARD_POLLING) {
+					/* If keyboard polling is active report key */
+					kev.type = OSW_KEYEV_TYPE_PRESSED;
+					kev.keycode = key_code;
+					kev.mod = mod_flags;
+					//kev.sym = sym;
+					__osw_KeyboardAddEvent(&kev);
+				} else {
+					/* Inactive keyboard polling makes keyboard act as a joypad */
+					//for (k = 0; k < 14; ++k) {
+					//	if (xkey_mapping[k] == key_ev.keycode) {
+					//		joy_state[0].btn |= (1 << k);
+					//	}
+					//}
+				}
+			} break;
+			case NSEventTypeKeyUp: {/* NSKeyUp */
+				NSInteger key_code = MSG(NSInteger, id, SEL)(event, sel_keyCode);
+				if (input_state.polling & OSW_KEYBOARD_POLLING) {
+					/* If keyboard polling is active report key */
+					kev.type = OSW_KEYEV_TYPE_RELEASED;
+					kev.keycode = key_code;
+					kev.mod = mod_flags;
+					//kev.sym = sym;
+					__osw_KeyboardAddEvent(&kev);
+				} else {
+					/* Inactive keyboard polling makes keyboard act as a joypad */
+					//for (k = 0; k < 14; ++k) {
+					//	if (xkey_mapping[k] == key_ev.keycode) {
+					//		joy_state[0].btn |= (1 << k);
+					//	}
+					//}
+				}
 			} break;
 
 		}
@@ -231,7 +347,11 @@ void __osw_VideoPoll(void)
 		MSG(id, SEL, id)(NSApp, sel_sendEvent, event);
 		MSG(void, id, SEL)(NSApp, sel_updateWindows);
 	}
-
+	/* Update frame rectangle */
+	NSRect rect = MSGS(NSRect, id, SEL)(content_view, sel_frame);
+	rect = MSGS(NSRect, id, SEL, NSRect)(content_view, sel_convertRectToBacking, rect);
+	vstate.frame_w = rect.size.width;
+	vstate.frame_h = rect.size.height;
 }
 
 

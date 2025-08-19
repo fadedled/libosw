@@ -28,6 +28,7 @@ extern "C" {
  * ============================================================================
  */
 void OSW_VideoSetSize(u32 w, u32 h);       /* Sets the window size */
+void OSW_VideoGetSize(u32 *w, u32 *h);     /* Gets the window size */
 void OSW_VideoTitleSet(const char* title); /* Sets the window title */
 void OSW_VideoHintFPS(u32 fps);            /* Hints for window refresh FPS */
 void OSW_VideoSwapBuffers(void);           /* Swaps the frame buffers */
