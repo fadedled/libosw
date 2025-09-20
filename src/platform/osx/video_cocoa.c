@@ -5,18 +5,14 @@
 #include "libosw/input.h"
 
 #include <limits.h>
-#include <AppKit/NSEvent.h>
-#include <objc/objc.h>
 #include <objc/runtime.h>
 #include <objc/message.h>
-#include <objc/NSObjCRuntime.h>
-#include <objc/NSObjCRuntime.h>
-#include <OpenGL/gl.h>
-
+#include <ApplicationServices/ApplicationServices.h>
 #include <CoreGraphics/CGBase.h>
 #include <CoreGraphics/CGGeometry.h>
-typedef CGPoint NSPoint;
-typedef CGRect NSRect;
+#include <OpenGL/gl.h>
+#include "osx_types.h"
+
 
 //TODO: Is this somewhere?
 #if __LP64__ || (TARGET_OS_EMBEDDED && !TARGET_OS_IPHONE) || TARGET_OS_WIN32 || NS_BUILD_32_LIKE_64
@@ -40,33 +36,6 @@ extern id const NSDefaultRunLoopMode;
 
 #ifndef MAC_OS_X_VERSION_10_12
 #define MAC_OS_X_VERSION_10_12 101200
-#endif
-
-/* macOS 10.12 deprecated many constants, #define the new names for older SDKs */
-#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12
-	#define NSEventMaskAny                  NSAnyEventMask
-	#define NSEventModifierFlagCommand      NSCommandKeyMask
-	#define NSEventModifierFlagControl      NSControlKeyMask
-	#define NSEventModifierFlagOption       NSAlternateKeyMask
-	#define NSEventTypeFlagsChanged         NSFlagsChanged
-	#define NSEventTypeKeyUp                NSKeyUp
-	#define NSEventTypeKeyDown              NSKeyDown
-	#define NSEventTypeMouseMoved           NSMouseMoved
-	#define NSEventTypeLeftMouseDown        NSLeftMouseDown
-	#define NSEventTypeRightMouseDown       NSRightMouseDown
-	#define NSEventTypeOtherMouseDown       NSOtherMouseDown
-	#define NSEventTypeLeftMouseDragged     NSLeftMouseDragged
-	#define NSEventTypeRightMouseDragged    NSRightMouseDragged
-	#define NSEventTypeOtherMouseDragged    NSOtherMouseDragged
-	#define NSEventTypeLeftMouseUp          NSLeftMouseUp
-	#define NSEventTypeRightMouseUp         NSRightMouseUp
-	#define NSEventTypeOtherMouseUp         NSOtherMouseUp
-	#define NSEventTypeScrollWheel          NSScrollWheel
-	#define NSTextAlignmentCenter           NSCenterTextAlignment
-	#define NSWindowStyleMaskBorderless     NSBorderlessWindowMask
-	#define NSWindowStyleMaskClosable       NSClosableWindowMask
-	#define NSWindowStyleMaskMiniaturizable NSMiniaturizableWindowMask
-	#define NSWindowStyleMaskTitled         NSTitledWindowMask
 #endif
 
 
