@@ -7,7 +7,7 @@ LIBDIR   :=	lib
 BUILD    :=	build
 INCLUDES :=	include
 SOURCES  :=	src src/platform/linux src/opengl
-CFLAGS	 :=	-O2 -Wall -fPIC -std=c89
+CFLAGS	 :=	-O2 -Wall -fPIC
 GLSLDIR  := 	src/opengl/shaders
 #BIN2INC	 := 	tools/kt-bin2inc
 

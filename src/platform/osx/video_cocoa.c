@@ -4,9 +4,12 @@
 #include "../../input_common.h"
 #include "libosw/input.h"
 
+#include <limits.h>
+#include <AppKit/NSEvent.h>
 #include <objc/objc.h>
 #include <objc/runtime.h>
 #include <objc/message.h>
+#include <objc/NSObjCRuntime.h>
 #include <objc/NSObjCRuntime.h>
 #include <OpenGL/gl.h>
 
@@ -96,7 +99,8 @@ SEL sel_setTitle;
 SEL sel_updateWindows;
 SEL sel_update;
 SEL sel_flushBuffer;
-
+Class class_NSString;
+id content_view;
 
 struct KTVideoOSX_t {
 	id win; /* window */
@@ -104,6 +108,11 @@ struct KTVideoOSX_t {
 	/* struct timespec time_begin; */
 } osw_osx;
 
+
+void __windowClose(id self, SEL _sel, id notification)
+{
+	//Do something...
+}
 
 NSUInteger __appTerminateRequest(id self, SEL _sel, id sender)
 {
@@ -140,6 +149,7 @@ u32  __osw_VideoInit(u32 flags)
 	SEL sel_Alloc = sel("alloc");
 	SEL sel_Init = sel("init");
 	SEL sel_Autorelease = sel("autorelease");
+	Class class_NSString = cls("NSString");
 
 	/* Autorelease Pool */
 	id pool = MSG(id, id, SEL)(alloc_cls("NSAutoreleasePool"), sel_Init);
@@ -185,7 +195,7 @@ u32  __osw_VideoInit(u32 flags)
 	MSG(void, id, SEL)(wdg, sel_Autorelease);
 	MSG(void, id, SEL, id)(osw_osx.win, sel("setDelegate:"), wdg);
 
-	id content_view = MSG(id, id, SEL)(osw_osx.win, sel("contentView"));
+	content_view = MSG(id, id, SEL)(osw_osx.win, sel("contentView"));
 	MSG(void, id, SEL, BOOL)(content_view, sel("setWantsBestResolutionOpenGLSurface:"), YES);
 
 	NSPoint point = {20, 20};
@@ -211,7 +221,7 @@ u32  __osw_VideoInit(u32 flags)
 
 	MSG(void, id, SEL, id)(osw_osx.glc, sel("setView:"), content_view);
 	MSG(void, id, SEL, id)(osw_osx.win, sel("makeKeyAndOrderFront:"), osw_osx.win);
-	MSG(void, id, SEL, BOOL)(osw_osx.win, sel("setAcceptsMouseMovedEvents:", YES));
+	MSG(void, id, SEL, BOOL)(osw_osx.win, sel("setAcceptsMouseMovedEvents:"), YES);
 
 	//TODO: Do some other things
 	id back_color = MSG(id, Class, SEL)(cls("NSColor"), sel("blackColor"));
@@ -262,6 +272,7 @@ void __osw_VideoAttrSet(u32 attr, void *val)
 
 void __osw_VideoPoll(void)
 {
+	OSWKeyEvent kev;
 	NSInteger mod_flags = 0;
 	//TODO: Depracated types
 	NSUInteger event_mask = NSEventMaskKeyDown | NSEventMaskKeyUp | StructureNotifyMask;
@@ -275,15 +286,10 @@ void __osw_VideoPoll(void)
 	input_state.mouse.btn1 = 0;
 	input_state.mouse.scroll = 0;
 
-						case Button1: input_state.mouse.btn0++; input_state.mouse.btn |= OSW_MOUSE_BTN0;
-					case Button3: input_state.mouse.btn1++; input_state.mouse.btn |= OSW_MOUSE_BTN1;
-					case Button4: input_state.mouse.scroll--;
-					case Button5: input_state.mouse.scroll++;
-
-	id dist_past = MSG(cls("NSDate"), sel_distantPast);
+	id dist_past = MSG(id, Class, SEL)(cls("NSDate"), sel_distantPast);
 	id event = MSG(id, id, SEL, NSUInteger, id, id, BOOL)(NSApp, sel_nextEventMatchingMask, NSUIntegerMax, dist_past, NSDefaultRunLoopMode, YES);
 	if (event) {
-		NSUInteger ev_type = MSG(event, sel_type);
+		NSUInteger ev_type = MSG(NSUInteger, id, SEL)(event, sel_type);
 		switch (ev_type) {
 			case NSEventTypeMouseMoved: {/* NSMouseMoved */
 			} break;
@@ -344,7 +350,7 @@ void __osw_VideoPoll(void)
 
 		}
 		//TODO: What does thid do?
-		MSG(id, SEL, id)(NSApp, sel_sendEvent, event);
+		MSG(void, id, SEL, id)(NSApp, sel_sendEvent, event);
 		MSG(void, id, SEL)(NSApp, sel_updateWindows);
 	}
 	/* Update frame rectangle */
@@ -358,5 +364,5 @@ void __osw_VideoPoll(void)
 void __osw_VideoSwapBuffers(void)
 {
 	//TODO: don't use sel()
-	MSG(void, id, SEL)(osw_osx.glc, sel_flushBuffer)
+	MSG(void, id, SEL)(osw_osx.glc, sel_flushBuffer);
 }
