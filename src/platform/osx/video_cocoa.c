@@ -118,7 +118,7 @@ u32  __osw_VideoInit(u32 flags)
 	SEL sel_Alloc = sel("alloc");
 	SEL sel_Init = sel("init");
 	SEL sel_Autorelease = sel("autorelease");
-	Class class_NSString = cls("NSString");
+	class_NSString = cls("NSString");
 
 	/* Autorelease Pool */
 	id pool = MSG(id, id, SEL)(alloc_cls("NSAutoreleasePool"), sel_Init);
@@ -128,7 +128,7 @@ u32  __osw_VideoInit(u32 flags)
 	MSG(id, Class, SEL)(class_NSApplication, sel("sharedApplication"));
 
 	/* NSApp */
-	MSG(void, id, SEL, NSInteger)(NSApp, sel("setActivationPolicy"), 0);
+	MSG(void, id, SEL, NSInteger)(NSApp, sel("setActivationPolicy:"), 0); // NSApplicationActivationPolicyRegular
 
 	/* AppDelegate */
 	Class class_AppDelegate = objc_allocateClassPair(cls("NSObject"), "AppDelegate", 0);
@@ -244,11 +244,11 @@ void __osw_VideoPoll(void)
 	OSWKeyEvent kev;
 	NSInteger mod_flags = 0;
 	//TODO: Depracated types
-	NSUInteger event_mask = NSEventMaskKeyDown | NSEventMaskKeyUp | StructureNotifyMask;
+	NSUInteger event_mask = NSEventMaskKeyDown | NSEventMaskKeyUp;
 
 	/* Only check button events when mouse polling is active */
 	if (input_state.polling & OSW_MOUSE_POLLING) {
-		polling_mask |= NSEventMaskLeftMouseDown | NSEventMaskLeftMouseUp | NSEventMaskRightMouseDown | NSEventMaskRightMouseUp | NSEventMaskScrollWheel;
+		event_mask |= NSEventMaskLeftMouseDown | NSEventMaskLeftMouseUp | NSEventMaskRightMouseDown | NSEventMaskRightMouseUp | NSEventMaskScrollWheel;
 	}
 
 	input_state.mouse.btn0 = 0;
@@ -256,7 +256,7 @@ void __osw_VideoPoll(void)
 	input_state.mouse.scroll = 0;
 
 	id dist_past = MSG(id, Class, SEL)(cls("NSDate"), sel_distantPast);
-	id event = MSG(id, id, SEL, NSUInteger, id, id, BOOL)(NSApp, sel_nextEventMatchingMask, NSUIntegerMax, dist_past, NSDefaultRunLoopMode, YES);
+	id event = MSG(id, id, SEL, NSUInteger, id, id, BOOL)(NSApp, sel_nextEventMatchingMask, event_mask, dist_past, NSDefaultRunLoopMode, YES);
 	if (event) {
 		NSUInteger ev_type = MSG(NSUInteger, id, SEL)(event, sel_type);
 		switch (ev_type) {

@@ -21,6 +21,12 @@ void __osw_JoypadAttrSet(u32 attr, u32 val)
 }
 
 
+void __osw_JoypadSearchAndOpen(void)
+{
+
+}
+
+
 void __osw_JoypadPoll(void)
 {
 

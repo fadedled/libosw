@@ -26,6 +26,7 @@ void* GalogenGetProcAddress(const char *name) {
 
 #elif defined(__APPLE__)
 #include <dlfcn.h>
+#include <stddef.h>
 
 static void* GalogenGetProcAddress (const char *name)
 {
