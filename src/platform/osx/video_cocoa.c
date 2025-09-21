@@ -70,6 +70,7 @@ SEL sel_update;
 SEL sel_flushBuffer;
 Class class_NSString;
 id content_view;
+id ev_pool;
 
 struct KTVideoOSX_t {
 	id win; /* window */
@@ -121,7 +122,7 @@ u32  __osw_VideoInit(u32 flags)
 	class_NSString = cls("NSString");
 
 	/* Autorelease Pool */
-	id pool = MSG(id, id, SEL)(alloc_cls("NSAutoreleasePool"), sel_Init);
+	ev_pool = MSG(id, id, SEL)(alloc_cls("NSAutoreleasePool"), sel_Init);
 
 	/* NSApplication */
 	Class class_NSApplication = cls("NSApplication");
@@ -322,6 +323,7 @@ void __osw_VideoPoll(void)
 		MSG(void, id, SEL, id)(NSApp, sel_sendEvent, event);
 		MSG(void, id, SEL)(NSApp, sel_updateWindows);
 	}
+
 	/* Update frame rectangle */
 	NSRect rect = MSGS(NSRect, id, SEL)(content_view, sel_frame);
 	rect = MSGS(NSRect, id, SEL, NSRect)(content_view, sel_convertRectToBacking, rect);
@@ -334,4 +336,5 @@ void __osw_VideoSwapBuffers(void)
 {
 	//TODO: don't use sel()
 	MSG(void, id, SEL)(osw_osx.glc, sel_flushBuffer);
+	MSG(id, id, SEL)(ev_pool, sel("release")); //release event pool
 }
