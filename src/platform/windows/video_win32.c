@@ -69,7 +69,7 @@ static LRESULT CALLBACK __osw_winCallback(HWND win, UINT msg, WPARAM wparam, LPA
 		case WM_ACTIVATEAPP: {
 		} break;
 		case WM_PAINT: {
-			__osw_VideoSwapBuffers();
+			//Should swap manually...
 		} break;
 		case WM_LBUTTONDOWN: input_state.mouse.btn0++; input_state.mouse.btn |= OSW_MOUSE_BTN0; break;
 		case WM_RBUTTONDOWN: input_state.mouse.btn1++; input_state.mouse.btn |= OSW_MOUSE_BTN1; break;

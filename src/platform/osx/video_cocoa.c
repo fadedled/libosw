@@ -120,6 +120,7 @@ u32  __osw_VideoInit(u32 flags)
 	SEL sel_Init = sel("init");
 	SEL sel_Autorelease = sel("autorelease");
 	class_NSString = cls("NSString");
+	__initSel();
 
 	/* Autorelease Pool */
 	ev_pool = MSG(id, id, SEL)(alloc_cls("NSAutoreleasePool"), sel_Init);
@@ -151,7 +152,7 @@ u32  __osw_VideoInit(u32 flags)
 	/* TODO: Check styleMask = 15 constants */
 	osw_osx.win = MSG(id, id, SEL, NSRect, NSUInteger, NSUInteger, BOOL)(alloc_cls("NSWindow"), sel("initWithContentRect:styleMask:backing:defer:"), wrect, 15, 2, NO);
 	MSG(void, id, SEL)(osw_osx.win, sel_Autorelease);
-	MSG(void, id, SEL, BOOL)(osw_osx.win, sel("setTeleasedWhenClosed:"), NO);
+	MSG(void, id, SEL, BOOL)(osw_osx.win, sel("setReleasedWhenClosed:"), NO);
 
 	/* WindowDelegate for window resize and closing */
 	Class class_WindowDelegate = objc_allocateClassPair(cls("NSObject"), "WindowDelegate", 0);
@@ -184,7 +185,7 @@ u32  __osw_VideoInit(u32 flags)
 		99, 0x4100, /* OpenGL version 4.1 (last version supported by Apple) */
 		0 /* END */
 	};
-	id pix_format = MSG(id, id, SEL, const u32*)(alloc_cls("NSOpenGlPixelFormat"), sel("initWithAttributes:"), gl_attr);
+	id pix_format = MSG(id, id, SEL, const u32*)(alloc_cls("NSOpenGLPixelFormat"), sel("initWithAttributes:"), gl_attr);
 	MSG(void, id, SEL)(pix_format, sel_Autorelease);
 	osw_osx.glc = MSG(id, id, SEL, id, id)(alloc_cls("NSOpenGLContext"), sel("initWithFormat:shareContext:"), pix_format, nil);
 	MSG(void, id, SEL)(osw_osx.glc, sel_Autorelease);
@@ -323,6 +324,10 @@ void __osw_VideoPoll(void)
 		MSG(void, id, SEL, id)(NSApp, sel_sendEvent, event);
 		MSG(void, id, SEL)(NSApp, sel_updateWindows);
 	}
+
+	//THIS SHOULD BE HERE??
+	MSG(void, id, SEL)(osw_osx.glc, sel_update);
+	MSG(void, id, SEL)(osw_osx.glc, sel("makeCurrentContext"));
 
 	/* Update frame rectangle */
 	NSRect rect = MSGS(NSRect, id, SEL)(content_view, sel_frame);

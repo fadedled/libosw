@@ -5,7 +5,7 @@
 
 u32  __osw_JoypadInit(void)
 {
-	return OSW_ERROR_NO_JOYPAD;
+	return OSW_OK; //OSW_ERROR_NO_JOYPAD;
 }
 
 
