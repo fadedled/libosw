@@ -260,6 +260,10 @@ void __osw_VideoPoll(void)
 			case ConfigureNotify:{
 				vstate.frame_w = xev.xconfigure.width;
 				vstate.frame_h = xev.xconfigure.height;
+				if (vstate.flags & OSW_FLAG_USE_OPENGL) {
+					vstate.output_w = vstate.frame_w;
+					vstate.output_h = vstate.frame_h;
+				}
 				__osw_UpdateOutputDims();
 			} break;
 		}

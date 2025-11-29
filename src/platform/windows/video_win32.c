@@ -54,12 +54,20 @@ static LRESULT CALLBACK __osw_winCallback(HWND win, UINT msg, WPARAM wparam, LPA
 		case WM_SIZE: {
 			vstate.frame_w = LOWORD(lparam);
 			vstate.frame_h = HIWORD(lparam);
+			if (vstate.flags & OSW_FLAG_USE_OPENGL) {
+				vstate.output_w = vstate.frame_w;
+				vstate.output_h = vstate.frame_h;
+			}
 		} break;
 		case WM_WINDOWPOSCHANGING: {
 			RECT cli_rect, win_rect;
 			GetClientRect(osw_win.hwin, &cli_rect);
 			vstate.frame_w = cli_rect.right - cli_rect.left;
 			vstate.frame_h = cli_rect.bottom - cli_rect.top;
+			if (vstate.flags & OSW_FLAG_USE_OPENGL) {
+				vstate.output_w = vstate.frame_w;
+				vstate.output_h = vstate.frame_h;
+			}
 		} break;
 		case WM_DESTROY: {
 		} break;
